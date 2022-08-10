@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.recipe.project06.mapper.RecipeMapper">
+	<sql id="totalsearch">
+		<where>
+			ci_writer like CONCAT('%',#{word},'%')
+			or
+			ci_title like
+			CONCAT('%',#{word},'%')
+			or
+			ci_content like CONCAT('%',#{word},'%')
+		</where>
+	</sql>
+	<sql id="search">
+		<where>
+			<if test="word!=null and field =='writer'">
+				ci_writer like CONCAT('%',#{word},'%')
+			</if>
+			<if test="word!=null and field =='title'">
+				ci_title like CONCAT('%',#{word},'%')
+			</if>
+			<if test="word!=null and field =='content'">
+				ci_content like CONCAT('%',#{word},'%')
+			</if>
+			<if test="word!=null and field =='cwt'">
+				ci_writer like CONCAT('%',#{word},'%')
+				or
+				ci_title like
+				CONCAT('%',#{word},'%')
+				or
+				ci_content like CONCAT('%',#{word},'%')
+			</if>
+		</where>
+	</sql>
+
+	
+
+	<select id="getList"
+		resultType="com.recipe.project06.entity.Recipe">
+		 select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_content, a.ci_explanation,
+		a.ci_count, a.ci_categories, b.file_origin, b.file_save, b.save_folder
+	    from recipe a 
+		left join recipe_file b
+		on a.ci_num=b.ci_num
+		order by ci_num desc 
+	
+	</select>
+
+	<select id="findPage"
+		resultType="com.recipe.project06.entity.Recipe">
+		select * from recipe where ci_num>0 order by ci_num desc
+		limit
+		#{pageStart},#{pageSize}
+	</select>
+
+	<select id="findAll"
+		resultType="com.recipe.project06.entity.Recipe">
+	<!-- 	select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_content, a.ci_explanation,
+		a.ci_count, a.ci_categories, b.file_origin, b.file_save, b.save_folder
+	    from recipe a 
+		left join recipe_file b
+		on a.ci_num=b.ci_num -->
+		
+	select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		<include refid="search" />
+		 order by a.ci_num desc limit #{pageStart},#{pageSize} 
+	</select>
+
+	<select id="boardCount" resultType="int">
+		select count(*) from recipe
+		<include refid="search" />
+	</select>
+	<select id="totalfindAll"
+		resultType="com.recipe.project06.entity.Recipe">
+		select * from recipe
+		<include refid="totalsearch" />
+		order by ci_num desc limit #{pageStart},#{pageSize}
+	</select>
+
+	<select id="totalboardCount" resultType="int">
+		select count(*) from recipe
+		<include refid="totalsearch" />
+	</select>
+
+	<insert id="insertSelectKey">
+		<selectKey keyProperty="ci_num" resultType="int"
+			order="BEFORE">
+			select max(ci_num) + 1 from recipe
+		</selectKey>
+
+		insert into recipe(ci_num, ci_title, ci_content, ci_writer,
+		ci_categories, ci_explanation)
+		values(#{ci_num},
+		#{ci_title},#{ci_content},#{ci_writer}, #{ci_categories}, #{ci_explanation})
+	</insert>
+
+	<insert id="fileRegister">
+		insert into recipe_file(ci_num,
+		save_folder,file_origin, file_save,file_type, file_num)
+		values(#{ci_num},#{save_folder},#{file_origin},#{file_save},#{file_type},#{file_num})
+	</insert>
+
+	<select id="getFile"
+		resultType="com.recipe.project06.entity.Recipe_File">
+		select * from recipe_file where file_num=#{file_num}
+	</select>
+
+	<select id="getFileList"
+		resultType="com.recipe.project06.entity.Recipe_File">
+		select * from recipe_file where ci_num=#{ci_num}
+	</select>
+
+	<insert id="insert"> insert into recipe(ci_title, ci_content, ci_writer, ci_explanation)
+		values(#{ci_title},#{ci_content},#{ci_writer},#{ci_explanation})
+	</insert>
+
+	<update id="hitCount">
+		update recipe set ci_count=ci_count+1 where
+		ci_num=#{ci_num}
+	</update>
+
+	<select id="read"
+		resultType="com.recipe.project06.entity.Recipe">
+		select * from recipe where ci_num=#{ci_num}
+	</select>
+
+	<update id="update">
+		update recipe
+		set ci_title=#{ci_title},
+		ci_content=#{ci_content},
+		ci_writer=#{ci_writer},
+		ci_categories=#{ci_categories},
+		ci_explanation=#{ci_explanation}, 
+		ci_updatedate=now()
+		where ci_num=#{ci_num}
+	</update>
+
+	<delete id="delete">
+		delete from recipe where ci_num=#{ci_num}
+	</delete>
+
+	<update id="replyCountUpdate">
+		update recipe set ci_replycount = ci_replycount +
+		#{amount} where ci_num=#{ci_num}
+	</update>
+
+	<select id="getListko"
+		resultType="com.recipe.project06.entity.Recipe">
+	<!-- 	select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_content, a.ci_explanation,
+		a.ci_count, a.ci_categories, b.file_origin, b.file_save, b.save_folder
+	    from recipe a 
+		left join recipe_file b
+		on a.ci_num=b.ci_num
+		 where ci_categories="한식"  -->
+		 select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+where ci_categories="한식"
+		 order by ci_num desc 
+	</select>
+	<select id="getListjo"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		where ci_categories ="일식"
+		order by ci_num desc
+	</select>
+	<select id="getListco"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		where ci_categories ="중식"
+		order by ci_num desc
+	</select>
+	<select id="getListmo"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		where ci_categories ="양식"
+		order by ci_num desc
+	</select>
+	<select id="getListdo"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		where ci_categories ="디저트"
+		order by ci_num desc
+	</select>
+
+	<select id="getListRank"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		order by  ci_count desc  limit 8
+	</select>
+	
+	<select id="getListTop4"
+		resultType="com.recipe.project06.entity.Recipe">
+		select a.ci_num, a.ci_writer, a.ci_regdate, a.ci_title, a.ci_explanation, a.ci_categories
+	,  ifnull(b.file_save, '') as img1, ifnull(b.save_folder, '') as img1_savefolder
+	,  ifnull(c.file_save, '') as img2,  ifnull(c.save_folder, '') as img2_savefolder
+    ,  ifnull(d.file_save,'') as img3,  ifnull(d.save_folder, '') as img3_savefolder
+from recipe a
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 1) b on a.ci_num = b.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 2) c on a.ci_num = c.ci_num
+left join (select ci_num, file_save, save_folder from recipe_file where file_num = 3) d on a.ci_num = d.ci_num
+		order by  ci_count desc  limit 4
+	</select>
+</mapper>

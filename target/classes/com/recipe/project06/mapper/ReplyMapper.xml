@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.recipe.project06.mapper.ReplyMapper">
+
+<insert id="insert">
+	insert into recipe_review(ci_num,ci_re_content,ci_re_writer)
+	values(#{ci_num},#{ci_re_content},#{ci_re_writer})
+</insert>
+
+<select id="read" resultType="com.recipe.project06.entity.Recipe_Review">
+	select * from recipe_review where ci_re_num=#{ci_re_num}
+</select>
+
+<update id="update">
+	update recipe_review set ci_re_content=#{ci_re_content} where ci_re_num=#{ci_re_num}
+</update>
+
+<delete id="delete">
+	delete from recipe_review where ci_re_num=#{ci_re_num}
+</delete>
+
+<select id="getReplyList" resultType="com.recipe.project06.entity.Recipe_Review">
+	select * from recipe_review where ci_num=#{ci_num} order by ci_re_num desc
+</select>
+
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.recipe.project06.mapper.BoardReplyMapper">
+
+<insert id="insert1">
+	insert into board_review(b_num, b_re_content ,b_re_writer)
+	values(#{b_num},#{b_re_content},#{b_re_writer})
+</insert>
+
+<select id="read1" resultType="com.recipe.project06.entity.Board_Review">
+	select * from board_review where b_re_num=#{b_re_num}
+</select>
+
+<update id="update1">
+	update board_review set b_re_content=#{b_re_content} where b_re_num=#{b_re_num}
+</update>
+
+<delete id="delete1">
+	delete from board_review where b_re_num=#{b_re_num}
+</delete>
+
+<select id="getReplyList1" resultType="com.recipe.project06.entity.Board_Review">
+	select * from board_review where b_num=#{b_num} order by b_re_num desc
+</select>
+
+</mapper>
